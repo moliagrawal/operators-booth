@@ -16,7 +16,6 @@ app.get("/health", (req, res) => {
 // We use manual verification and settlement to ensure verify-then-settle ordering.
 // We only call settle() if the parse succeeds and schema validation passes.
 app.post("/parse", async (req, res) => {
-  console.log("--> POST /parse", req.headers);
   try {
     // SDK expects "payment-signature", but client sends "X-PAYMENT"
     if (req.headers["x-payment"]) {
@@ -33,8 +32,6 @@ app.post("/parse", async (req, res) => {
 
     if (processResult.type === "payment-error") {
       const { status, headers, body } = processResult.response;
-      console.log("PAYMENT ERROR STATUS:", status);
-      console.log("PAYMENT REQUIRED HEADER:", headers["PAYMENT-REQUIRED"] || headers["payment-required"]);
       for (const [k, v] of Object.entries(headers)) {
         res.setHeader(k, v);
       }
