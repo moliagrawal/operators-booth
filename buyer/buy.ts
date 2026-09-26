@@ -69,6 +69,19 @@ async function run() {
     console.log("Response:", badData);
     console.log("NOTE: Because the server verified then settled, and this request failed validation, NO settlement occurred for this failure.");
 
+    // Attempt a bulk parse
+    console.log();
+    console.log("--- Demonstrating PAID path with BULK INPUT ---");
+    console.log("Sending 2 well-formed notices...");
+    const bulkRes = await paidFetch(`${API_BASE_URL}/parse/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notices: [notice, notice] }),
+    });
+    console.log(`POST /parse/bulk (valid): ${bulkRes.status}`);
+    const bulkData = await bulkRes.json();
+    console.log("Response:", bulkData);
+
   } catch (error) {
     console.error("Error during paid fetch:", error);
   }
