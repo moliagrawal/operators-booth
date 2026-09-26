@@ -16,19 +16,25 @@ app.get("/health", (req, res) => {
 // We use manual verification and settlement to ensure verify-then-settle ordering.
 // We only call settle() if the parse succeeds and schema validation passes.
 app.post("/parse", async (req, res) => {
+  console.log("--> POST /parse", req.headers);
   try {
+    // SDK expects "payment-signature", but client sends "X-PAYMENT"
+    if (req.headers["x-payment"]) {
+      req.headers["payment-signature"] = req.headers["x-payment"];
+    }
     const adapter = new ExpressAdapter(req);
     const requestContext = {
       adapter,
       path: req.path,
-      method: req.method,
-      paymentHeader: req.header("authorization")
+      method: req.method
     };
     
     const processResult = await x402Server.processHTTPRequest(requestContext);
 
     if (processResult.type === "payment-error") {
       const { status, headers, body } = processResult.response;
+      console.log("PAYMENT ERROR STATUS:", status);
+      console.log("PAYMENT REQUIRED HEADER:", headers["PAYMENT-REQUIRED"] || headers["payment-required"]);
       for (const [k, v] of Object.entries(headers)) {
         res.setHeader(k, v);
       }
@@ -83,12 +89,15 @@ app.post("/parse", async (req, res) => {
 
 app.post("/parse/bulk", async (req, res) => {
   try {
+    // SDK expects "payment-signature", but client sends "X-PAYMENT"
+    if (req.headers["x-payment"]) {
+      req.headers["payment-signature"] = req.headers["x-payment"];
+    }
     const adapter = new ExpressAdapter(req);
     const requestContext = {
       adapter,
       path: req.path,
-      method: req.method,
-      paymentHeader: req.header("authorization")
+      method: req.method
     };
     
     const processResult = await x402Server.processHTTPRequest(requestContext);
