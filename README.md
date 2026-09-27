@@ -44,8 +44,11 @@ npm test
 | Method | Path | Cost | Description |
 |---|---|---|---|
 | GET | `/health` | FREE | Health check. |
-| POST | `/parse` | $0.001 | Parses a single raw text notice into JSON. |
-| POST | `/parse/bulk` | $0.005 | Parses multiple raw text notices into JSON. |
+| POST | `/parse` | $0.001 (exact) | Parses a single raw text notice into JSON. |
+| POST | `/parse/bulk` | Up to $0.05 | Parses multiple raw text notices. Uses the `upto` scheme to authorize a max budget, settling exactly $0.001 per *successfully* parsed notice. |
+
+## Signed Offers & Receipts
+This API supports the `@x402/extensions/offer-receipt` extension. Every 402 response includes a cryptographically signed Offer committing to the price, and every successful 200 response returns a signed Receipt. This provides commuters with verifiable proof of payment and data delivery.
 
 ## Verify-Then-Settle Design
 

@@ -148,30 +148,36 @@ app.post("/parse/bulk", async (req, res) => {
     }
 
     const results = [];
+    let successfulCount = 0;
     for (const notice of notices) {
       if (typeof notice !== "string" || notice.length > 2000) {
-        res.status(400).json({ error: "BAD_REQUEST", message: "each notice must be a string <= 2000 chars" });
-        return;
+        continue;
       }
       const parseResult = parseNotice(notice);
       if (!parseResult.ok) {
-        res.status(422).json({ error: "PARSE_FAILED", message: parseResult.reason });
-        return;
+        continue;
       }
       const schemaResult = parsedNoticeSchema.safeParse(parseResult.data);
       if (!schemaResult.success) {
-        res.status(422).json({ error: "PARSE_FAILED", message: "Schema validation failed" });
-        return;
+        continue;
       }
       results.push(schemaResult.data);
+      successfulCount++;
     }
+
+    if (successfulCount === 0) {
+      res.status(422).json({ error: "PARSE_FAILED", message: "All notices failed to parse" });
+      return;
+    }
+
+    const amountStr = "$" + (successfulCount * 0.001).toFixed(3);
 
     await x402Server.processSettlement(
       processResult.paymentPayload,
       processResult.paymentRequirements,
       processResult.declaredExtensions,
       { request: requestContext },
-      undefined,
+      { amount: amountStr },
       processResult.beforeHandlerSettlement
     );
     res.status(200).json(results);

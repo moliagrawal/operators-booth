@@ -16,10 +16,10 @@ export function parseNotice(notice: string): ParseResult {
   }
   const trainNumber = trainMatch[1];
 
-  // Extract time (HH:MM or H:MM optionally with AM/PM)
-  const timeMatch = notice.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?:\s*(am|pm))?\b/i);
-  if (!timeMatch) {
-    return { ok: false, reason: "Could not find a valid expected time (HH:MM)" };
+  // Extract time (HH:MM, H.MM, HHMM hrs, etc)
+  const timeMatch = notice.match(/\b([01]?\d|2[0-3])[:.]?([0-5]\d)(?:\s*(am|pm|hrs))?\b/i);
+  if (!timeMatch || (timeMatch[0].indexOf(':') === -1 && timeMatch[0].indexOf('.') === -1 && !timeMatch[3])) {
+    return { ok: false, reason: "Could not find a valid expected time" };
   }
   
   let hour = parseInt(timeMatch[1], 10);
