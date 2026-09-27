@@ -9,42 +9,35 @@ export function parseNotice(notice: string): ParseResult {
     return { ok: false, reason: "Notice is empty" };
   }
 
-  // Example inputs:
-  // "12345 PUNE now expected 14:40 due to signal failure"
-  // "22222 CSTM 09:15"
-  
-  const tokens = notice.trim().split(/\s+/);
-  if (tokens.length < 3) {
-    return { ok: false, reason: "Not enough tokens to parse train, station, and time" };
+  // Extract train number (sequence of digits, typically 4-6)
+  const trainMatch = notice.match(/\b(\d{4,6})\b/);
+  if (!trainMatch) {
+    return { ok: false, reason: "Could not find a valid train number" };
   }
+  const trainNumber = trainMatch[1];
 
-  const trainNumber = tokens[0];
-  if (!/^\d+$/.test(trainNumber)) {
-    return { ok: false, reason: "Invalid train number format" };
-  }
-
-  const station = tokens[1];
-  
-  // Find the time token (HH:MM)
-  let timeIndex = -1;
-  for (let i = 2; i < tokens.length; i++) {
-    if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(tokens[i])) {
-      timeIndex = i;
-      break;
-    }
-  }
-
-  if (timeIndex === -1) {
+  // Extract time (HH:MM)
+  const timeMatch = notice.match(/\b([01]\d|2[0-3]):([0-5]\d)\b/);
+  if (!timeMatch) {
     return { ok: false, reason: "Could not find a valid expected time (HH:MM)" };
   }
+  const expectedTime = timeMatch[0];
 
-  const expectedTime = tokens[timeIndex];
-  
-  // Anything after the time token is the reason
-  let reason = undefined;
-  if (timeIndex < tokens.length - 1) {
-    reason = tokens.slice(timeIndex + 1).join(" ");
+  // Extract station code (2-5 uppercase letters)
+  const stationMatch = notice.match(/\b([A-Z]{2,5})\b/);
+  if (!stationMatch) {
+    return { ok: false, reason: "Could not find a valid station code" };
   }
+  const station = stationMatch[1];
+
+  // Extract reason: anything after the time
+  const timeIndex = notice.indexOf(expectedTime);
+  let reasonText = notice.slice(timeIndex + expectedTime.length).trim();
+  
+  // Clean up common filler words at the start of the reason
+  reasonText = reasonText.replace(/^(due to|because of|-|for)\s*/i, "").trim();
+  
+  const reason = reasonText.length > 0 ? reasonText : undefined;
 
   return {
     ok: true,

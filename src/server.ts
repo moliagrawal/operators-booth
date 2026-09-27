@@ -13,6 +13,29 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+// Free route to preview if a notice is parseable without charging or returning data
+app.post("/parse/preview", (req, res) => {
+  const { notice } = req.body;
+  if (typeof notice !== "string") {
+    res.status(400).json({ error: "BAD_REQUEST", message: "notice must be a string" });
+    return;
+  }
+  
+  const parseResult = parseNotice(notice);
+  if (!parseResult.ok) {
+    res.status(200).json({ valid: false, error: parseResult.reason });
+    return;
+  }
+  
+  const schemaResult = parsedNoticeSchema.safeParse(parseResult.data);
+  if (!schemaResult.success) {
+    res.status(200).json({ valid: false, error: "Schema validation failed" });
+    return;
+  }
+
+  res.status(200).json({ valid: true });
+});
+
 // We use manual verification and settlement to ensure verify-then-settle ordering.
 // We only call settle() if the parse succeeds and schema validation passes.
 app.post("/parse", async (req, res) => {
